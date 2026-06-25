@@ -6,6 +6,7 @@ const ALLOWED_TYPES = new Set([
   'clicked_yes',
   'slot_selected',
   'confirmed',
+  'back_swipe',
 ]);
 
 export default async function handler(req, res) {

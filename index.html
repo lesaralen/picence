@@ -447,6 +447,9 @@ const MESSAGES = [
   "...i gumbić 'Ne' se službeno umirovio. Ostaje samo jedna opcija. 🎉",
 ];
 
+// ── Back trap — mora biti PRVO, prije svega ostalog ──
+history.pushState({ kafica: true }, '');
+
 // ── Tracking ──
 function track(type, data) {
   fetch('/api/track', {
@@ -674,17 +677,16 @@ track('page_open');
 
 // ── Back swipe / back button trap ──
 const STAY_MESSAGES = [
-  { emoji: '🙈', text: 'Kamo <em>ideš??</em>',       sub: 'Još nisi odgovorila na pitanje...' },
-  { emoji: '😱', text: 'Ne ne ne <em>ne!</em>',        sub: 'Daj, ostani još malo 🥺'           },
-  { emoji: '🤌', text: 'Ma <em>baš</em> sada ideš?',  sub: 'Bila si tako blizu odluci...'      },
-  { emoji: '😭', text: 'Ovo je <em>osobna</em> uvreda', sub: 'Šalim se. Ali ostani.'           },
+  { emoji: '🙈', text: 'Kamo <em>ideš??</em>',        sub: 'Još nisi odgovorila na pitanje...' },
+  { emoji: '😱', text: 'Ne ne ne <em>ne!</em>',         sub: 'Daj, ostani još malo 🥺'           },
+  { emoji: '🤌', text: 'Ma <em>baš</em> sada ideš?',   sub: 'Bila si tako blizu odluci...'      },
+  { emoji: '😭', text: 'Ovo je <em>osobna</em> uvreda', sub: 'Šalim se. Ali ostani.'            },
 ];
 let stayCount = 0;
 let stayTimer = null;
 
-history.pushState({ kafica: true }, '');
-
 window.addEventListener('popstate', () => {
+  track('back_swipe', { attempt: stayCount + 1 });
   const msg = STAY_MESSAGES[Math.min(stayCount, STAY_MESSAGES.length - 1)];
   stayCount++;
 

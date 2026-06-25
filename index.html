@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jedno Pitanje 🍹</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300;1,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0b0907;
+      --surface:     #171210;
+      --surface-2:   #201810;
+      --gold:        #c9a44a;
+      --gold-light:  #e8c870;
+      --gold-dim:    rgba(201,164,74,.15);
+      --cream:       #f0e6cc;
+      --cream-dim:   rgba(240,230,204,.55);
+      --rose:        #c0455f;
+      --muted:       #6a5a48;
+    }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Cormorant Garamond', serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ── Atmospheric background ── */
+    .bg-glow {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 55% at 25% 75%, rgba(120,25,45,.14) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 40% at 75% 25%, rgba(201,164,74,.06) 0%, transparent 55%);
+    }
+
+    /* Noise texture */
+    .bg-noise {
+      position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: .045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    /* Floating bubbles */
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+    .particle {
+      position: absolute; bottom: -20px; border-radius: 50%;
+      background: rgba(201,164,74,.25);
+      animation: float-up var(--dur) ease-in infinite;
+      animation-delay: var(--del);
+      left: var(--x);
+    }
+    @keyframes float-up {
+      0%   { transform: translateY(0) scale(1);   opacity: .35; }
+      50%  { opacity: .55; }
+      100% { transform: translateY(-105vh) scale(.2); opacity: 0; }
+    }
+
+    /* ── Screens ── */
+    .screen {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+      opacity: 0; transform: translateY(24px);
+      pointer-events: none;
+      transition: opacity .6s ease, transform .6s cubic-bezier(.16,1,.3,1);
+    }
+    .screen.active  { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .screen.leaving { opacity: 0; transform: translateY(-24px); transition-duration: .4s; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid rgba(201,164,74,.14);
+      border-radius: 2px;
+      padding: 2.8rem 3.5rem;
+      max-width: 520px;
+      width: calc(100% - 2rem);
+      text-align: center;
+      position: relative;
+      box-shadow:
+        0 0 0 1px rgba(201,164,74,.04),
+        0 24px 70px rgba(0,0,0,.65),
+        0 4px 12px rgba(0,0,0,.4);
+      animation: card-in .75s cubic-bezier(.16,1,.3,1) .1s both;
+    }
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(20px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Art deco corners */
+    .card::before, .card::after {
+      content: ''; position: absolute;
+      width: 36px; height: 36px;
+      border-style: solid; opacity: .38; border-color: var(--gold);
+    }
+    .card::before { top: 13px; left: 13px; border-width: 1px 0 0 1px; }
+    .card::after  { bottom: 13px; right: 13px; border-width: 0 1px 1px 0; }
+
+    /* Inner corner accents */
+    .card-corners::before, .card-corners::after {
+      content: ''; position: absolute;
+      width: 36px; height: 36px;
+      border-style: solid; opacity: .2; border-color: var(--gold);
+    }
+    .card-corners::before { top: 13px; right: 13px; border-width: 1px 1px 0 0; }
+    .card-corners::after  { bottom: 13px; left: 13px; border-width: 0 0 1px 1px; }
+
+    .eyebrow {
+      font-size: .78rem; letter-spacing: .35em; text-transform: uppercase;
+      color: var(--gold); opacity: .8; margin-bottom: 1.4rem;
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.8rem, 8vw, 4.4rem);
+      font-weight: 400; line-height: 1.1; color: var(--cream);
+      margin-bottom: .4rem;
+    }
+    .title em { font-style: italic; color: var(--gold-light); }
+
+    .divider {
+      display: flex; align-items: center; gap: 1rem; margin: 1.3rem 0;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(201,164,74,.35), transparent);
+    }
+    .divider-gem { color: var(--gold); font-size: .8rem; opacity: .65; }
+
+    .body-text {
+      font-size: 1.05rem; color: var(--cream-dim); line-height: 1.65;
+    }
+
+    /* ── Buttons ── */
+    .buttons {
+      display: flex; gap: 1rem; justify-content: center;
+      margin-top: 1.8rem; flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; letter-spacing: .1em;
+      padding: .72rem 2.4rem;
+      border: none; border-radius: 1px;
+      cursor: pointer; transition: all .3s ease;
+    }
+
+    .btn-yes {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      background-size: 200% 200%;
+      color: var(--bg); font-weight: 600;
+      box-shadow: 0 4px 22px rgba(201,164,74,.28);
+      animation: shimmer 3.5s ease infinite;
+    }
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50%       { background-position: 100% 50%; }
+    }
+    .btn-yes:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 34px rgba(201,164,74,.5);
+    }
+
+    .btn-no {
+      background: transparent; color: var(--muted);
+      border: 1px solid rgba(106,90,72,.4);
+    }
+    .btn-no.floating {
+      position: fixed; z-index: 50; margin: 0;
+      transition: left .18s ease, top .18s ease, transform .35s ease, opacity .35s ease !important;
+    }
+
+    /* Message */
+    .message {
+      min-height: 1.8rem; margin-top: 1rem;
+      font-style: italic; font-size: .98rem;
+      color: var(--rose); opacity: 0;
+      transition: opacity .5s ease; line-height: 1.5;
+    }
+    .message.show { opacity: 1; }
+
+    /* ── Time slot screen ── */
+    .subtitle {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.9rem, 5vw, 2.8rem);
+      font-weight: 400; margin-bottom: .3rem;
+    }
+    .subtitle em { font-style: italic; color: var(--gold-light); }
+
+    .slots {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: .7rem; margin-top: 1.4rem;
+    }
+
+    .slot {
+      background: var(--surface-2);
+      border: 1px solid rgba(201,164,74,.1);
+      border-radius: 1px; padding: .9rem 1.1rem;
+      cursor: pointer; text-align: left;
+      color: var(--cream); font-family: 'Cormorant Garamond', serif;
+      transition: all .25s ease;
+    }
+    .slot:hover {
+      background: rgba(201,164,74,.07);
+      border-color: rgba(201,164,74,.4);
+      transform: translateY(-1px);
+    }
+    .slot.selected {
+      background: rgba(201,164,74,.1);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 1px rgba(201,164,74,.15);
+    }
+    .slot-day  { font-size: .73rem; letter-spacing: .2em; text-transform: uppercase; color: var(--gold); opacity: .8; }
+    .slot-time { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 400; margin-top: .2rem; }
+    .slot-label { font-size: .83rem; color: var(--cream-dim); margin-top: .15rem; font-style: italic; }
+
+    .btn-confirm {
+      margin-top: 1.4rem; width: 100%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--bg); font-weight: 600;
+      opacity: .35; pointer-events: none;
+      transition: all .3s ease;
+    }
+    .btn-confirm.ready { opacity: 1; pointer-events: auto; }
+    .btn-confirm.ready:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(201,164,74,.5);
+    }
+
+    /* ── Confirmation screen ── */
+    .confirm-icon {
+      font-size: 3.8rem; display: block; margin-bottom: .9rem;
+      animation: pop-in .55s cubic-bezier(.175,.885,.32,1.275) forwards;
+    }
+    @keyframes pop-in {
+      from { transform: scale(0) rotate(-15deg); }
+      to   { transform: scale(1) rotate(0deg); }
+    }
+
+    .confirm-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.1rem, 6vw, 3.2rem);
+      font-weight: 400; margin-bottom: .4rem;
+    }
+    .confirm-title em { font-style: italic; color: var(--gold-light); }
+
+    .confirm-when {
+      font-size: 1.1rem; color: var(--gold-light);
+      font-style: italic; margin-bottom: 1rem; opacity: .9;
+    }
+
+    .confirm-note {
+      font-size: .96rem; color: var(--cream-dim); line-height: 1.65;
+    }
+
+    /* Confetti */
+    .confetti {
+      position: fixed; pointer-events: none; z-index: 200;
+      animation: confetti-fall var(--dur) ease-in var(--del) both;
+      top: -12px; left: var(--x);
+      width: var(--sz); height: var(--sz);
+    }
+    @keyframes confetti-fall {
+      0%   { transform: translateY(0) rotate(0deg) translateX(0); opacity: 1; }
+      100% { transform: translateY(105vh) rotate(720deg) translateX(var(--drift)); opacity: 0; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 500px) {
+      .card { padding: 2rem 1.4rem; }
+      .slots { grid-template-columns: 1fr; }
+      .title { font-size: 2.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+<div class="bg-noise"></div>
+<div class="particles" id="particles"></div>
+
+<!-- ══ Screen 1 — The Question ══ -->
+<div class="screen active" id="screen-question">
+  <div class="card card-corners">
+    <p class="eyebrow">🍹 jedna važna stvar</p>
+    <h1 class="title">Idemo<br><em>na piće?</em></h1>
+    <div class="divider"><span class="divider-gem">◆</span></div>
+    <div class="buttons">
+      <button class="btn btn-yes" id="btn-yes">Da, naravno ✨</button>
+      <button class="btn btn-no"  id="btn-no">Ne</button>
+    </div>
+    <p class="message" id="message"></p>
+  </div>
+</div>
+
+<!-- ══ Screen 2 — Pick a Time ══ -->
+<div class="screen" id="screen-times">
+  <div class="card card-corners">
+    <p class="eyebrow">🗓 savršen trenutak</p>
+    <h2 class="subtitle"><em>Kada</em> ti odgovara?</h2>
+    <div class="divider"><span class="divider-gem">◆</span></div>
+    <div class="slots" id="slots"></div>
+    <button class="btn btn-confirm" id="btn-confirm">Potvrdi termin →</button>
+  </div>
+</div>
+
+<!-- ══ Screen 3 — Confirmed ══ -->
+<div class="screen" id="screen-confirm">
+  <div class="card card-corners">
+    <span class="confirm-icon">🍹</span>
+    <h2 class="confirm-title">Sjajno!<br><em>Jedva čekam.</em></h2>
+    <div class="divider"><span class="divider-gem">◆</span></div>
+    <p class="confirm-when" id="confirm-when"></p>
+    <p class="confirm-note">
+      Bit ću točan, zgodan i u dobrom raspoloženju.<br>
+      Obećavam da ću se maksimalno potruditi<br>biti zanimljiv. 😄
+    </p>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  KONFIGURACIJA — ovdje postavi svoje termine!
+// ═══════════════════════════════════════════════
+const TIME_SLOTS = [
+  { day: 'Petak',    date: '27. lipnja',  time: '20:00', label: 'večernji aperitiv'  },
+  { day: 'Subota',   date: '28. lipnja',  time: '18:00', label: 'popodnevni koktel'  },
+  { day: 'Subota',   date: '28. lipnja',  time: '21:00', label: 'noćna avantura'     },
+  { day: 'Nedjelja', date: '29. lipnja',  time: '17:00', label: 'sundowner'          },
+];
+
+// ═══════════════════════════════════════════════
+//  Smiješne poruke kad pokuša kliknuti "Ne"
+// ═══════════════════════════════════════════════
+const MESSAGES = [
+  "Hm... jesi li stvarno sigurna? 🤔",
+  "Taj gumb izgleda tehnički pokvaren. Ispričavam se za neugodnost.",
+  "Bit ću JAKO tužan. 🥺",
+  "MOLIM TE.  🙏🙏🙏",
+  "Gumb 'Ne' je otišao na zasluženi godišnji odmor.",
+  "Ok, zadnji pokušaj",
+  "...i 'Ne' gumb se službeno umirovio. Ostaje samo jedna opcija. 🎉",
+];
+
+// ── Tracking ──
+function track(type, data) {
+  fetch('/api/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type, data }),
+  }).catch(() => {}); // tiho ignorira greške
+}
+
+// ─────────────────────────────────────────────
+let noAttempts  = 0;
+let isFloating  = false;
+let selectedSlot = null;
+
+// ── Particles ──
+const particlesEl = document.getElementById('particles');
+for (let i = 0; i < 22; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const sz = 2 + Math.random() * 3.5;
+  p.style.cssText = `
+    --dur: ${4 + Math.random() * 7}s;
+    --del: ${Math.random() * 7}s;
+    --x:   ${Math.random() * 100}%;
+    width: ${sz}px; height: ${sz}px;
+  `;
+  particlesEl.appendChild(p);
+}
+
+// ── Screen transitions ──
+function goTo(id) {
+  const current = document.querySelector('.screen.active');
+  if (current) {
+    current.classList.add('leaving');
+    current.classList.remove('active');
+    setTimeout(() => current.classList.remove('leaving'), 500);
+  }
+  setTimeout(() => {
+    const next = document.getElementById(id);
+    // Re-trigger card animation by cloning
+    const card = next.querySelector('.card');
+    card.style.animation = 'none';
+    requestAnimationFrame(() => {
+      card.style.animation = '';
+      next.classList.add('active');
+    });
+  }, 350);
+}
+
+// ── No button logic ──
+const noBtn   = document.getElementById('btn-no');
+const yesBtn  = document.getElementById('btn-yes');
+const msgEl   = document.getElementById('message');
+
+function moveNoButton() {
+  noAttempts++;
+  track('no_attempt', { attempt: noAttempts });
+
+  // Update message
+  const msgIdx = Math.min(noAttempts - 1, MESSAGES.length - 1);
+  msgEl.textContent = MESSAGES[msgIdx];
+  msgEl.classList.add('show');
+
+  // Grow and glow the Yes button
+  const scale = Math.min(1 + noAttempts * 0.045, 1.35);
+  yesBtn.style.transform = `scale(${scale})`;
+  yesBtn.style.boxShadow = `0 8px ${20 + noAttempts * 4}px rgba(201,164,74,${0.3 + noAttempts * 0.05})`;
+
+  if (noAttempts >= MESSAGES.length) {
+    noBtn.style.transition = 'opacity .5s ease';
+    noBtn.style.opacity = '0';
+    setTimeout(() => noBtn.style.display = 'none', 500);
+    return;
+  }
+
+  // First attempt: detach from card and float
+  if (!isFloating) {
+    isFloating = true;
+    const rect = noBtn.getBoundingClientRect();
+    noBtn.classList.add('floating');
+    noBtn.style.left = rect.left + 'px';
+    noBtn.style.top  = rect.top  + 'px';
+    document.body.appendChild(noBtn);
+    // Let transition kick in after position set
+    requestAnimationFrame(() => teleportNoButton());
+    return;
+  }
+
+  teleportNoButton();
+}
+
+function teleportNoButton() {
+  const w  = window.innerWidth;
+  const h  = window.innerHeight;
+  const bw = noBtn.offsetWidth  || 80;
+  const bh = noBtn.offsetHeight || 42;
+  const pad = 60;
+
+  const x = pad + Math.random() * (w - bw - pad * 2);
+  const y = pad + Math.random() * (h - bh - pad * 2);
+
+  noBtn.style.left = x + 'px';
+  noBtn.style.top  = y + 'px';
+
+  const shrink = Math.max(.65, 1 - noAttempts * 0.035);
+  const fade   = Math.max(.25, 1 - noAttempts * 0.075);
+  noBtn.style.transform = `scale(${shrink})`;
+  noBtn.style.opacity   = String(fade);
+}
+
+// Desktop: move on mouse approach
+noBtn.addEventListener('mouseenter', () => {
+  moveNoButton();
+});
+
+// Mobile: move on touch before click registers
+noBtn.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  moveNoButton();
+}, { passive: false });
+
+// Fallback click (safety net)
+noBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (!isFloating) moveNoButton();
+});
+
+// ── Yes button ──
+yesBtn.addEventListener('click', () => {
+  track('clicked_yes');
+  buildSlots();
+  goTo('screen-times');
+});
+
+// ── Build time slots ──
+function buildSlots() {
+  const container = document.getElementById('slots');
+  container.innerHTML = '';
+  TIME_SLOTS.forEach((slot) => {
+    const el = document.createElement('button');
+    el.className = 'slot';
+    el.innerHTML = `
+      <div class="slot-day">${slot.day} · ${slot.date}</div>
+      <div class="slot-time">${slot.time}</div>
+      <div class="slot-label">${slot.label}</div>
+    `;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedSlot = slot;
+      track('slot_selected', slot);
+      document.getElementById('btn-confirm').classList.add('ready');
+    });
+    container.appendChild(el);
+  });
+}
+
+// ── Confirm ──
+document.getElementById('btn-confirm').addEventListener('click', () => {
+  if (!selectedSlot) return;
+  document.getElementById('confirm-when').textContent =
+    `${selectedSlot.day}, ${selectedSlot.date} u ${selectedSlot.time} — ${selectedSlot.label}`;
+  track('confirmed', selectedSlot);
+  goTo('screen-confirm');
+  setTimeout(launchConfetti, 550);
+});
+
+// ── Confetti ──
+function launchConfetti() {
+  const colors = ['#c9a44a','#e8c870','#c0455f','#f0e6cc','#7a1e30','#ffffff'];
+  for (let i = 0; i < 65; i++) {
+    const el  = document.createElement('div');
+    const sz  = 4 + Math.random() * 9;
+    const dur = 1.6 + Math.random() * 2;
+    const del = Math.random() * .9;
+    el.className = 'confetti';
+    el.style.cssText = `
+      --dur:   ${dur}s;
+      --del:   ${del}s;
+      --x:     ${Math.random() * 100}%;
+      --sz:    ${sz}px;
+      --drift: ${(Math.random() - .5) * 220}px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      border-radius: ${Math.random() > .5 ? '50%' : '2px'};
+      width: ${sz}px; height: ${sz}px;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), (dur + del + .5) * 1000);
+  }
+}
+
+// ── Track page open ──
+track('page_open');
+</script>
+</body>
+</html>

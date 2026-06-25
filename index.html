@@ -325,6 +325,39 @@
       border-color: var(--gold); color: var(--gold-light);
     }
 
+    /* ── Stay overlay ── */
+    .stay-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(11,9,7,.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s ease;
+    }
+    .stay-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .stay-card {
+      background: var(--surface);
+      border: 1px solid rgba(201,164,74,.2);
+      border-radius: 2px;
+      padding: 2.2rem 2.5rem;
+      max-width: 340px; width: calc(100% - 3rem);
+      text-align: center;
+      animation: card-in .4s cubic-bezier(.16,1,.3,1) both;
+    }
+    .stay-emoji { font-size: 3rem; display: block; margin-bottom: .8rem; }
+    .stay-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; font-weight: 400; line-height: 1.3;
+      color: var(--cream);
+    }
+    .stay-text em { font-style: italic; color: var(--gold-light); }
+    .stay-sub {
+      font-size: .95rem; color: var(--cream-dim);
+      margin-top: .7rem; font-style: italic;
+    }
+
     /* ── Responsive / iOS ── */
     @media (max-width: 430px) {
       .card { padding: 1.8rem 1.2rem; width: calc(100% - 1.5rem); }
@@ -340,6 +373,14 @@
   </style>
 </head>
 <body>
+
+<div class="stay-overlay" id="stay-overlay">
+  <div class="stay-card">
+    <span class="stay-emoji" id="stay-emoji">🙈</span>
+    <p class="stay-text" id="stay-text">Kamo <em>ideš??</em></p>
+    <p class="stay-sub" id="stay-sub">Još nisi odgovorila na pitanje...</p>
+  </div>
+</div>
 
 <div class="bg-glow"></div>
 <div class="bg-noise"></div>
@@ -630,6 +671,38 @@ function launchConfetti() {
 
 // ── Track page open ──
 track('page_open');
+
+// ── Back swipe / back button trap ──
+const STAY_MESSAGES = [
+  { emoji: '🙈', text: 'Kamo <em>ideš??</em>',       sub: 'Još nisi odgovorila na pitanje...' },
+  { emoji: '😱', text: 'Ne ne ne <em>ne!</em>',        sub: 'Daj, ostani još malo 🥺'           },
+  { emoji: '🤌', text: 'Ma <em>baš</em> sada ideš?',  sub: 'Bila si tako blizu odluci...'      },
+  { emoji: '😭', text: 'Ovo je <em>osobna</em> uvreda', sub: 'Šalim se. Ali ostani.'           },
+];
+let stayCount = 0;
+let stayTimer = null;
+
+history.pushState({ kafica: true }, '');
+
+window.addEventListener('popstate', () => {
+  const msg = STAY_MESSAGES[Math.min(stayCount, STAY_MESSAGES.length - 1)];
+  stayCount++;
+
+  document.getElementById('stay-emoji').textContent = msg.emoji;
+  document.getElementById('stay-text').innerHTML    = msg.text;
+  document.getElementById('stay-sub').textContent   = msg.sub;
+
+  const overlay = document.getElementById('stay-overlay');
+  overlay.classList.add('show');
+
+  clearTimeout(stayTimer);
+  stayTimer = setTimeout(() => {
+    overlay.classList.remove('show');
+  }, 2500);
+
+  // Push state again so next back swipe is caught too
+  history.pushState({ kafica: true }, '');
+});
 </script>
 </body>
 </html>

@@ -578,6 +578,7 @@ noBtn.addEventListener('click', (e) => {
 // ── Yes button ──
 yesBtn.addEventListener('click', () => {
   track('clicked_yes');
+  noBtn.style.display = 'none';
   buildSlots();
   goTo('screen-times');
 });

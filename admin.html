@@ -273,10 +273,11 @@ function eventDetail(ev) {
 // ── Render ──
 function render(events) {
   const status = deriveStatus(events);
+  const reversed = [...events].reverse();
 
   const timelineHtml = events.length === 0
     ? `<div class="state-box"><span class="icon">🕰</span>Nema evenata još. Pošalji joj link!</div>`
-    : events.map((ev, i) => {
+    : reversed.map((ev, i) => {
         const meta = EVENT_META[ev.type] ?? { icon: '•', label: ev.type };
         const detail = eventDetail(ev);
         return `

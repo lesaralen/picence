@@ -377,7 +377,7 @@
 
 <div class="stay-overlay" id="stay-overlay">
   <div class="stay-card">
-    <span class="stay-emoji" id="stay-emoji">🙈</span>
+    <span class="stay-emoji" id="stay-emoji">🫣</span>
     <p class="stay-text" id="stay-text">Kamo <em>ideš??</em></p>
     <p class="stay-sub" id="stay-sub">Još nisi odgovorila na pitanje...</p>
   </div>
@@ -673,19 +673,24 @@ function launchConfetti() {
 // ── Track page open ──
 track('page_open');
 
-// ── Track kad ode s stranice ──
+// ── Track kad ode s stranice (sendBeacon je pouzdaniji pri zatvaranju) ──
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
-    track('left_page');
+    const payload = JSON.stringify({ type: 'left_page' });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon('/api/track', new Blob([payload], { type: 'application/json' }));
+    } else {
+      track('left_page');
+    }
   }
 });
 
 // ── Back swipe / back button trap ──
 const STAY_MESSAGES = [
-  { emoji: '🙈', text: 'Kamo <em>ideš??</em>',        sub: 'Još nisi odgovorila na pitanje...' },
+  { emoji: '🫣', text: 'Kamo <em>ideš??</em>',        sub: 'Još nisi odgovorila na pitanje...' },
   { emoji: '😱', text: 'Ne ne ne <em>ne!</em>',         sub: 'Daj, ostani još malo 🥺'           },
   { emoji: '🤌', text: 'Ma <em>baš</em> sada ideš?',   sub: 'Bila si tako blizu odluci...'      },
-  { emoji: '😭', text: 'Ovo je <em>osobna</em> uvreda', sub: 'Šalim se. Ali ostani.'            },
+  { emoji: '😭', text: 'Ovo je <em>osobna</em> uvreda', sub: 'Šalim se. Ali ostaniiii.....'            },
 ];
 let stayCount = 0;
 let stayTimer = null;

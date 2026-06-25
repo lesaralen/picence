@@ -7,6 +7,7 @@ const ALLOWED_TYPES = new Set([
   'slot_selected',
   'confirmed',
   'back_swipe',
+  'left_page',
 ]);
 
 export default async function handler(req, res) {

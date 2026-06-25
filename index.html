@@ -6,6 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Jedno Pitanje 🍹</title>
+  <script>history.pushState({ kafica: true }, '');</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300;1,500&display=swap" rel="stylesheet">
@@ -447,9 +448,6 @@ const MESSAGES = [
   "...i gumbić 'Ne' se službeno umirovio. Ostaje samo jedna opcija. 🎉",
 ];
 
-// ── Back trap — mora biti PRVO, prije svega ostalog ──
-history.pushState({ kafica: true }, '');
-
 // ── Tracking ──
 function track(type, data) {
   fetch('/api/track', {
@@ -674,6 +672,13 @@ function launchConfetti() {
 
 // ── Track page open ──
 track('page_open');
+
+// ── Track kad ode s stranice ──
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    track('left_page');
+  }
+});
 
 // ── Back swipe / back button trap ──
 const STAY_MESSAGES = [
